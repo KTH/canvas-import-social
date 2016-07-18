@@ -1,8 +1,9 @@
 #! /usr/bin/env python3
-import optparse
-import requests
 from bs4 import BeautifulSoup
 from json import load as parse_json
+from urllib.parse import quote as urlquote
+import optparse
+import requests
 
 with open('config.json') as json_data_file:
     configuration = parse_json(json_data_file)
@@ -44,6 +45,15 @@ def main():
     #    wiki_page[body]
     #    wiki_page[published]
     html = BeautifulSoup(open("dump/%s/pages/%s.html" % (course_code, data['slug'])), "html.parser")
+    for tex in html.findAll('span', attrs={'role': 'formula', 'data-language': 'tex'}):
+        img = html.new_tag('img')
+        img['src'] = '/equation_images/' + urlquote(tex.text)
+        img['alt'] = tex.text
+        img['class'] = tex.get('class')
+        tex.replace_with(img)
+        if options.verbose:
+            print("Modified formula %s to: %s" % (tex, img))
+
     url = baseUrl + '%s/pages' % (course_id)
     print("Should post page to", url)
     payload={
@@ -54,9 +64,11 @@ def main():
     if options.verbose:
         print(payload)
     r = requests.post(url, headers = header, data=payload)
-    print("result of post creating page: " + r.text)
     if r.status_code == requests.codes.ok:
         page_response=r.json()
+        if options.verbose:
+            print("result of post creating page: " + page_response)
+        print("Uploaded page to %s" % page_response['html_url'])
 
 
 if __name__ == '__main__': main()
