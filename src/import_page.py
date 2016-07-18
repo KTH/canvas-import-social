@@ -39,7 +39,7 @@ def main():
         print("Should upload", data)
 
     # Use the Canvas API to insert the page
-    #PUT /api/v1/courses/:course_id/pages
+    #POST /api/v1/courses/:course_id/pages
     #    wiki_page[title]
     #    wiki_page[body]
     #    wiki_page[published]
