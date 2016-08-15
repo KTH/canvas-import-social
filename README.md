@@ -15,11 +15,11 @@ Prepare for running this project as for any python 3 project, something like thi
 Then, in this project, with the dump from above in a directory called
 `dump`, and with the folloing information known:
 
-$COURSE_ID: A numeric course id from canvas
-$COURSE_CODE: The code used by KTH for course, something like AB1234.
-$MODULE: (TODO, I don't know what this is supposed to be, it is currently unused)
+$COURSE_CODE: The code used by KTH for course round,
+something like AB1234HT161 for the course round with id 1, starting
+fall (HT) 2016 (16) of the course AB1234.
 $SLUG: The file name (sans .html) of the file to upload from dump.
 
-    ./src/import_page.py -v $COURSE_ID $COURSE_CODE $MODULE $SLUG
+    ./src/import_page.py -v $COURSE_CODE $SLUG
 
 This is a work in progress.
