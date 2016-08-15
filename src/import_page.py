@@ -17,7 +17,7 @@ with open('config.json') as json_data_file:
 
 def main():
     parser = optparse.OptionParser(
-        usage="Usage: %prog [options] course_code module filename")
+        usage="Usage: %prog [options] course_code filename")
 
     parser.add_option('-v', '--verbose',
                       dest="verbose",
@@ -30,16 +30,16 @@ def main():
     )
 
     options, args = parser.parse_args()
-    if len(args) != 3:
-        parser.error("course_code, module, and filename are required")
-    course_code, module, filename = args
+    if len(args) != 2:
+        parser.error("course_code and filename are required")
+    course_code, filename = args
     course_id = options.canvasid or find_canvas_id(course_code)
     if not course_id:
         print("Canvas course id not given or found")
         exit(1)
     if options.verbose:
-        print("Upload", filename, "to %s (canvas #%s) %s" % (
-            course_code, course_id, module))
+        print("Upload", filename, "to %s (canvas #%s)" % (
+            course_code, course_id))
     exit(1)
     with open('dump/%s/pages.json' % course_code) as json:
         data = parse_json(json)
