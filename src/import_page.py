@@ -17,7 +17,7 @@ with open('config.json') as json_data_file:
 
 def main():
     parser = optparse.OptionParser(
-        usage="Usage: %prog [options] course_id course_code module filename")
+        usage="Usage: %prog [options] course_code module filename")
 
     parser.add_option('-v', '--verbose',
                       dest="verbose",
@@ -25,14 +25,22 @@ def main():
                       action="store_true",
                       help="Print lots of output to stdout"
     )
-    
-    options, args = parser.parse_args()
-    if len(args) != 4:
-        parser.error("course_id, course_code, module, and filename are required")
-    course_id, course_code, module, filename = args
-    if options.verbose:
-        print("Upload", filename, "to", course_id, course_code, module)
+    parser.add_option('--canvasid', dest='canvasid',
+                      help="Canvas id for the course (or use lms api)"
+    )
 
+    options, args = parser.parse_args()
+    if len(args) != 3:
+        parser.error("course_code, module, and filename are required")
+    course_code, module, filename = args
+    course_id = options.canvasid or find_canvas_id(course_code)
+    if not course_id:
+        print("Canvas course id not given or found")
+        exit(1)
+    if options.verbose:
+        print("Upload", filename, "to %s (canvas #%s) %s" % (
+            course_code, course_id, module))
+    exit(1)
     with open('dump/%s/pages.json' % course_code) as json:
         data = parse_json(json)
     data = next(filter(lambda i: i['slug'] == filename, data), None)
@@ -132,6 +140,19 @@ def create_file(course_id, full_folder_name, file_name, verbose=False):
     if verbose:
         print("Phase 3 response: %s, json: %s" % (phase3_response, phase3_data))
     return phase3_data['preview_url']
+
+def find_canvas_id(coursecode):
+    resp = requests.get('http://lms-integration-1-r.referens.sys.kth.se:3000/lms-integration/api/courses/%s' % coursecode[:6])
+    if resp.status_code != 200:
+        print('Failed to get canvas data for %s' % coursecode[:6]);
+        return None
+    for j in resp.json():
+        if j['sis_course_id'] == coursecode:
+            return j['id']
+        else:
+            print('Ignoring %s' % j['sis_course_id'])
+    print('Failed to get canvas data for %s' % coursecode);
+    return None
 
 
 if __name__ == '__main__': main()
