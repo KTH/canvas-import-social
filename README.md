@@ -1,4 +1,5 @@
 # canvas-import-social
+
 Import pages (with possible uploaded files) from a dump from social into canvas.
 The tool to create the dumps this package works on is a management command included in social.
 
@@ -13,13 +14,14 @@ Prepare for running this project as for any python 3 project, something like thi
     pip install -r requirements.txt
 
 Then, in this project, with the dump from above in a directory called
-`dump`, and with the folloing information known:
+`dump`, run the command:
 
-$COURSE_CODE: The code used by KTH for course round,
-something like AB1234HT161 for the course round with id 1, starting
-fall (HT) 2016 (16) of the course AB1234.
-$SLUG: The file name (sans .html) of the file to upload from dump.
+    ./src/import_course.py -v $COURSE_ROUND_CODE
 
-    ./src/import_page.py -v $COURSE_CODE $SLUG
+where $COURSE_ROUND_CODE is The code used for the cavas course that a
+given course round at KTH uses.
+The format is sometimes used by KOPPS and Social, and looks something
+like AB1234HT161 for the course round with ladok round number 1,
+starting fall (HT) 2016 (16) of the course AB1234.
 
 This is a work in progress.
