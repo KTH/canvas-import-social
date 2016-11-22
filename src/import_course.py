@@ -15,6 +15,7 @@ with open('config.json') as json_data_file:
     access_token= canvas["access_token"]
     baseUrl = 'https://%s/api/v1/courses/' % canvas.get('host', 'kth.instructure.com')
     header = {'Authorization' : 'Bearer ' + access_token}
+    lmsapiurl = configuration['lmsapi']
 
 def main():
     parser = optparse.OptionParser(
@@ -44,6 +45,7 @@ def main():
     with open('dump/%s/pages.json' % course_code) as json:
         dumpdata = parse_json(json)
 
+    uploaded_files = {}
     for data in dumpdata:
         if options.verbose:
             print("Should upload", data)
@@ -57,20 +59,30 @@ def main():
         for link in html.findAll(href=True):
             linkdata = next(filter(lambda i: i['url'] == link['href'], data['links']), None)
             if linkdata['category'] == 'file':
-                canvas_url = create_file(course_id, 'dump/%s/pages/%s' % (course_code, linkdata['url']),
-                                         basename(linkdata['url']))
-                print("Uploaded %s to %s for link" % (link['href'], canvas_url))
+                canvas_url = uploaded_files.get(link['href'])
+                if not canvas_url:
+                    canvas_url = create_file(course_id, 'dump/%s/pages/%s' % (course_code, linkdata['url']),
+                                             basename(linkdata['url']))
+                    print("Uploaded %s to %s for link" % (link['href'], canvas_url))
+                    uploaded_files[link['href']] = canvas_url
+                else:
+                    print("%s is allready at %s" % (link['href'], canvas_url))
                 link['href'] = canvas_url
                 linkdata['url'] = canvas_url
 
         for img in html.findAll('img'):
             imgdata = next(filter(lambda i: i['url'] == img['src'], data['links']), None)
-            if linkdata['category'] == 'file':
-                canvas_url = create_file(course_id, 'dump/%s/pages/%s' % (course_code, imgdata['url']),
-                                     basename(imgdata['url']))
-                print("Uploaded %s to %s for img" % (img['src'], canvas_url))
+            if imgdata['category'] == 'file':
+                canvas_url = uploaded_files.get(img['src'])
+                if not canvas_url:
+                    canvas_url = create_file(course_id, 'dump/%s/pages/%s' % (course_code, imgdata['url']),
+                                             basename(imgdata['url']))
+                    print("Uploaded %s to %s for img" % (img['src'], canvas_url))
+                    uploaded_files[img['src']] = canvas_url
+                else:
+                    print("%s is allready at %s" % (img['src'], canvas_url))
                 img['src'] = canvas_url
-                linkdata['url'] = canvas_url
+                imgdata['url'] = canvas_url
 
         for tex in html.findAll('span', attrs={'role': 'formula', 'data-language': 'tex'}):
             img = html.new_tag('img')
@@ -144,7 +156,7 @@ def create_file(course_id, full_folder_name, file_name, verbose=False):
     phase3_response = requests.get(phase2_response.headers.get('Location'), headers=header)
     phase3_data = phase3_response.json()
     if phase1_response.status_code != 200:
-        print('Error in upload phase 1: %s\n%s' % (phase1_response, phase1_response.text))
+        print('Error in upload phase 3: %s\n%s' % (phase1_response, phase1_response.text))
         exit(1)
     if verbose:
         print("Phase 3 response: %s, json: %s" % (phase3_response, phase3_data))
@@ -153,15 +165,19 @@ def create_file(course_id, full_folder_name, file_name, verbose=False):
     return url[0:url.find('?')]
 
 def find_canvas_id(coursecode):
-    resp = requests.get('http://lms-integration-1-r.referens.sys.kth.se:3000/lms-integration/api/courses/%s' % coursecode[:6])
+    print('Url: %s' % ('%s/courses/%s' % (lmsapiurl, coursecode[:6])))
+    resp = requests.get('%s/courses/%s' % (lmsapiurl, coursecode[:6]))
     if resp.status_code != 200:
-        print('Failed to get canvas data for %s' % coursecode[:6]);
+        print('Failed to get canvas data for %s: %s' % coursecode[:6], resp);
         return None
-    for j in resp.json():
+    data = resp.json()
+    if len(data) == 1:
+        return data[0]['id']
+    for j in data:
         if j['sis_course_id'] == coursecode:
             return j['id']
-        else:
-            print('Ignoring %s' % j['sis_course_id'])
+        #else:
+        #    print('Ignoring %s' % j['sis_course_id'])
     print('Failed to get canvas data for %s' % coursecode);
     return None
 
