@@ -30,6 +30,9 @@ def main():
     parser.add_option('--canvasid', dest='canvasid',
                       help="Canvas id for the course (or use lms api)"
     )
+    parser.add_option('--dir', dest='dumpdir', default='dump',
+                      help="Directory to read dumps from"
+    )
 
     options, args = parser.parse_args()
     if len(args) != 1:
@@ -39,10 +42,13 @@ def main():
     if not course_id:
         print("Canvas course id not given or found")
         exit(1)
+    dumpdir = options.dumpdir
     if options.verbose:
-        print("Upload to %s (canvas #%s)" % (course_code, course_id))
+        print("Upload to %s (canvas #%s) from %s" % (
+            course_code, course_id, dumpdir))
+
     course_code = course_code[:6]
-    with open('dump/%s/pages.json' % course_code) as json:
+    with open('%s/%s/pages.json' % (dumpdir, course_code)) as json:
         dumpdata = parse_json(json)
 
     uploaded_files = {}
@@ -55,13 +61,13 @@ def main():
         #    wiki_page[title]
         #    wiki_page[body]
         #    wiki_page[published]
-        html = BeautifulSoup(open("dump/%s/pages/%s.html" % (course_code, data['slug'])), "html.parser")
+        html = BeautifulSoup(open("%s/%s/pages/%s.html" % (dumpdir, course_code, data['slug'])), "html.parser")
         for link in html.findAll(href=True):
             linkdata = next(filter(lambda i: i['url'] == link['href'], data['links']), None)
             if linkdata['category'] == 'file':
                 canvas_url = uploaded_files.get(link['href'])
                 if not canvas_url:
-                    canvas_url = create_file(course_id, 'dump/%s/pages/%s' % (course_code, linkdata['url']),
+                    canvas_url = create_file(course_id, '%s/%s/pages/%s' % (dumpdir, course_code, linkdata['url']),
                                              basename(linkdata['url']))
                     print("Uploaded %s to %s for link" % (link['href'], canvas_url))
                     uploaded_files[link['href']] = canvas_url
@@ -75,7 +81,7 @@ def main():
             if imgdata['category'] == 'file':
                 canvas_url = uploaded_files.get(img['src'])
                 if not canvas_url:
-                    canvas_url = create_file(course_id, 'dump/%s/pages/%s' % (course_code, imgdata['url']),
+                    canvas_url = create_file(course_id, '%s/%s/pages/%s' % (dumpdir, course_code, imgdata['url']),
                                              basename(imgdata['url']))
                     print("Uploaded %s to %s for img" % (img['src'], canvas_url))
                     uploaded_files[img['src']] = canvas_url
@@ -111,8 +117,8 @@ def main():
             data['url'] = page_response['html_url']
         else:
             print("Failed to upload page %s" % data['title'])
-    dumpname = 'dump/%s/zzz-import-%s-%s.json' % (
-        course_code, course_code, datetime.now().strftime('%Y%m%d-%H%M%S'))
+    dumpname = '%s/%s/zzz-import-%s-%s.json' % (
+        dumpdir, course_code, course_code, datetime.now().strftime('%Y%m%d-%H%M%S'))
     with open(dumpname, 'w') as json:
         dump_json(dumpdata, json, indent=4)
     result = create_file(course_id, dumpname, basename(dumpname))
