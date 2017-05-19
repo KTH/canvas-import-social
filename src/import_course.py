@@ -182,7 +182,7 @@ def find_canvas_id(coursecode, forterm='VT17'):
     print('Url: %s' % ('%s/courses/%s' % (lmsapiurl, coursecode[:6])))
     resp = requests.get('%s/courses/%s' % (lmsapiurl, coursecode[:6]))
     if resp.status_code != 200:
-        print('Failed to get canvas data for %s: %s' % coursecode[:6], resp);
+        print('Failed to get canvas data for %s: %s' % (coursecode[:6], resp));
         return None
     data = resp.json()
     if len(data) == 1:
