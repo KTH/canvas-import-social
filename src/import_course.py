@@ -183,7 +183,7 @@ def create_file(course_id, full_folder_name, file_name, verbose=False):
     url = phase3_data['url']
     return url[0:url.find('?')]
 
-def find_canvas_id(coursecode, forterm='VT17'):
+def find_canvas_id(coursecode, forterm='HT17'):
     print('Url: %s' % ('%s/courses/%s' % (lmsapiurl, coursecode[:6])))
     resp = requests.get('%s/courses/%s' % (lmsapiurl, coursecode[:6]))
     if resp.status_code != 200:
