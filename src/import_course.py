@@ -33,6 +33,9 @@ def main():
     parser.add_option('--dir', dest='dumpdir', default='dump',
                       help="Directory to read dumps from"
     )
+    parser.add_option('--nop', dest='nop', default=False, action='store_true',
+                      help="Only show canvas course for course round."
+    )
 
     options, args = parser.parse_args()
     if options.canvasid and len(args) != 1:
@@ -49,6 +52,8 @@ def main():
         if options.verbose:
             print("Upload to %s (canvas #%s) from %s" % (
                 course_code, course_id, dumpdir))
+        if options.nop:
+            next
 
         course_code = course_code[:6]
         with open('%s/%s/pages.json' % (dumpdir, course_code)) as json:
