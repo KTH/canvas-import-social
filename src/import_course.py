@@ -53,7 +53,7 @@ def main():
             print("Upload to %s (canvas #%s) from %s" % (
                 course_code, course_id, dumpdir))
         if options.nop:
-            next
+            continue
 
         course_code = course_code[:6]
         with open('%s/%s/pages.json' % (dumpdir, course_code)) as json:
