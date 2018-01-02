@@ -72,7 +72,7 @@ def main():
             html = BeautifulSoup(open("%s/%s/pages/%s.html" % (dumpdir, course_code, data['slug'])), "html.parser")
             for link in html.findAll(href=True):
                 linkdata = next(filter(lambda i: i['url'] == link['href'], data['links']), None)
-                if linkdata and linkdata['category'] == 'file':
+                if linkdata and linkdata.get('category') == 'file':
                     canvas_url = uploaded_files.get(link['href'])
                     if not canvas_url:
                         canvas_url = create_file(course_id, '%s/%s/pages/%s' % (dumpdir, course_code, linkdata['url']),
@@ -137,9 +137,13 @@ def create_file(course_id, full_folder_name, file_name, verbose=False):
     try:
         statinfo = stat(full_folder_name)
     except:
-        from urllib.parse import unquote
-        full_folder_name = unquote(full_folder_name)
-        statinfo = stat(full_folder_name)
+        try:
+            full_folder_name = full_folder_name.replace('+', '%20')
+            statinfo = stat(full_folder_name)
+        except:
+            from urllib.parse import unquote
+            full_folder_name = unquote(full_folder_name)
+            statinfo = stat(full_folder_name)
     payload = {
         'name' :  file_name,
         'size' :  statinfo.st_size,
